@@ -70,25 +70,25 @@ Additionally, it supports online synchronization, allowing you to keep your data
 
 ### Translation on any website
 
-![image-20240903211734046](/Users/ou/work/translate_gpt/images/image-20240903211734046.png)
+![image-20240903211734046](images/image-20240903211734046.png)
 
-![image-20240903211855844](/Users/ou/work/translate_gpt/images/image-20240903211855844.png)
+![image-20240903211855844](images/image-20240903211855844.png)
 
 ### Configuration Page
 
-![image-20240903212047501](/Users/ou/work/translate_gpt/images/image-20240903212047501.png)
+![image-20240903212047501](images/image-20240903212047501.png)
 
-![image-20240903212121264](/Users/ou/work/translate_gpt/images/image-20240903212121264.png)
+![image-20240903212121264](images/image-20240903212121264.png)
 
 
 
 ### History Page
 
-![image-20240903212431112](/Users/ou/work/translate_gpt/images/image-20240903212431112.png)
+![image-20240903212431112](images/image-20240903212431112.png)
 
 ### Add Page ( You can modify records)
 
-![image-20240903220158663](/Users/ou/work/translate_gpt/images/image-20240903220158663.png)
+![image-20240903220158663](images/image-20240903220158663.png)
 
 
 
