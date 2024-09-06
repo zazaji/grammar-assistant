@@ -1,4 +1,5 @@
-# Grammar Assistant
+# Grammar Assistant | [中文](readme_zh.md)
+
 
 ## Overview
 
