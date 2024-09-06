@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Grammar Assistant",
+  "version": "1.0",
+  "content_security_policy": {
+    "policy": "script-src 'self' 'unsafe-inline'; object-src 'self'"
+  },
+  "permissions": ["storage", "activeTab", "scripting","tabs"],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["js/content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "options.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+
+  "commands": {
+    "translate_with_api": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E"
+      },
+      "description": "Assistant using API"
+    }
+  },
+  "options_page": "options.html"
+
+}
