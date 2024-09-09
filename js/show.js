@@ -1,15 +1,67 @@
+let prompts = [];
+
 document.addEventListener("DOMContentLoaded", () => {
   // 加载并应用自定义 CSS
   let syncUrl = "";
   let syncToken = "";
   let customCSS = "";
+  let language = "";
+
+  // 从storage中获取当前历史记录
+  chrome.storage.local.get({ translationHistory: [] }, (data) => {
+    const history = data.translationHistory;
+    //将每一项的category属性加入到历史记录中
+    history.forEach((item) => {
+      item.category = item.category || 1;
+    });
+
+    // 保存合并后的历史记录
+    chrome.storage.local.set({ translationHistory: history });
+  });
 
   chrome.storage.local.get("configData", (data) => {
-    console.log(data);
+    language = data.configData.language || "en";
+    // document.getElementById("language").value = language;
+    //
+    changeLang(language);
     syncUrl = data.configData.syncUrl || "http://127.0.0.1:8000/translations";
     syncToken = data.configData.syncToken || "";
     customCSS = data.configData.customCSS || "";
+    prompts = data.configData.prompts || [];
     injectCSS(customCSS);
+
+    labels = document.getElementById("labels");
+    categorySelect = document.getElementById("category-select");
+    document.getElementById(`label0`).addEventListener("click", () => {
+      renderHistory();
+    });
+    //添加到labels中，多个标签
+    prompts.forEach((prompts, index) => {
+      selectBtn = document.createElement("div");
+      selectBtn.className = `label btn btn-sm btn-${index + 1}`;
+      selectBtn.id = `label${index + 1}`;
+      selectBtn.innerHTML = index + 1;
+      labels.appendChild(selectBtn);
+      document
+        .getElementById(`label${index + 1}`)
+        .addEventListener("click", () => {
+          renderHistory(index + 1);
+          // this.classList.toggle("active");
+        });
+
+      categorySelect.innerHTML += `<label
+          ><input
+              type="radio"
+              name="category-select"
+              value="${index + 1}"
+          />
+          <div class="btn badge btn-${index + 1}">${index + 1}</div></label
+      >`;
+      // option = document.createElement("option");
+      // option.value = index + 1;
+      // option.text = index + 1;
+      // document.getElementById("category-select").appendChild(option);
+    });
     const translatedLabel = document.getElementById("translated-label");
     translatedLabel.innerHTML += extractAndGenerateDivs(customCSS);
     document.querySelectorAll(".interactive-div").forEach((div) => {
@@ -22,8 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const regex = /([a-z]+[0-9]),[\sa-zA-Z0-9]+\s\*\s*{/g;
     let match;
     const properties = new Set();
-    console.log("haskdlhjfalds");
-    console.log(css);
+    // console.log("haskdlhjfalds");
+    // console.log(css);
 
     while ((match = regex.exec(css)) !== null) {
       const property = match[1];
@@ -32,8 +84,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 生成 HTML <div> 集合
     let divsHtml = "";
+    console.log(properties);
+
     properties.forEach((property) => {
-      console.log(property);
+      // console.log(property);
       divsHtml += `<div class='interactive-div' tag='${property}'><${property}>${property}</${property}></div>\n`;
     });
     return divsHtml;
@@ -70,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // 假设CSV格式是：original, translated, timestamp
         const original = columns[0].trim();
         const translated = columns[1].trim();
+        const category = columns[2].trim();
         const date =
           columns.length >= 3
             ? new Date(columns[2].trim()).toLocaleString()
@@ -81,6 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newEntries.push({
           original: original,
           translated: translated,
+          category: category,
           date: date,
         });
       }
@@ -100,7 +156,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderHistory();
 
-  function renderHistory() {
+  function updateCategory(index, category) {
+    chrome.storage.local.get({ translationHistory: [] }, (data) => {
+      const history = data.translationHistory;
+
+      history[index].category = category;
+      // history[index].date = new Date().toLocaleString(); // 更新日期为当前保存时间
+
+      // 保存更新后的记录
+      chrome.storage.local.set({ translationHistory: history }, () => {
+        console.log("Translation entry updated.");
+      });
+    });
+  }
+
+  function generateCategoryDropdown(id, category) {
+    const dropdown = document.createElement("select");
+    dropdown.className = `selectDropdown btn-${category}`;
+    // dropdown.setAttribute("name", id);
+    dropdown.name = id;
+    dropdown.dataValue = category;
+
+    prompts.forEach((val, index) => {
+      const option = document.createElement("option");
+      option.setAttribute("data-bg", `btn-${index + 1}`);
+
+      option.value = index + 1;
+      option.textContent = index + 1;
+
+      dropdown.appendChild(option);
+    });
+
+    return dropdown;
+  }
+
+  function reRenderSelect(index, category) {
+    document.querySelectorAll(".selectDropdown").forEach((select) => {
+      console.log(select, index);
+      if (select.name == index) {
+        select.value = String(category);
+        dropdown = select;
+      }
+    });
+
+    dropdown.addEventListener("change", (event) => {
+      console.log("dropdown changed");
+      const selectedOption = event.target.options[event.target.selectedIndex];
+      const className = selectedOption.getAttribute("data-bg");
+
+      // 修改 select 的背景颜色
+      dropdown.className = `selectDropdown ${className}`;
+
+      const newCategory = dropdown.value;
+      updateCategory(index, newCategory);
+    });
+  }
+
+  function renderHistory(catetory) {
     const historyTableBody = document.getElementById("history-tbody");
 
     chrome.storage.local.get({ translationHistory: [] }, (data) => {
@@ -112,22 +224,40 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         historyTableBody.innerHTML = ""; // 清空之前的内容
         history.forEach((entry, index) => {
+          if (catetory && entry.category != catetory) {
+            return;
+          }
           // 创建原文行
           const originalRow = document.createElement("tr");
           // 原文列
           const originalCell = document.createElement("td");
-          originalCell.innerHTML = `&#x2691 ${entry.original}`;
+
+          // const categoryBadge = document.createElement("span");
+          // categoryBadge.className = `badge btn-${entry.category}`;
+          // categoryBadge.textContent = entry.category;
+          // categoryBadge.style.cursor = "pointer";
+          // categoryBadge.addEventListener("click", () => {
+          //   console.log("categoryBadge clicked");
+          // });
+
+          if (entry.category) {
+            categoryDropdown = generateCategoryDropdown(index, entry.category);
+
+            originalCell.appendChild(categoryDropdown);
+            originalCell.innerHTML += ` ${entry.original}`;
+          }
           originalRow.appendChild(originalCell);
 
           // 日期时间列
           const timeCell = document.createElement("td");
-          timeCell.className = "timestamp  hide-on-mobile";
+          timeCell.className = "timestamp hide-on-mobile";
           timeCell.textContent = entry.date;
           // timeCell.rowSpan = 2; // 跨两行
           originalRow.appendChild(timeCell);
 
           // 将原文行添加到表格主体
           historyTableBody.appendChild(originalRow);
+          reRenderSelect(index, entry.category);
 
           // 创建翻译内容行
           const translatedRow = document.createElement("tr");
@@ -241,6 +371,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("syncButton")
     .addEventListener("click", syncTranslations);
 
+  // document.querySelectorAll('[class^="label"]').forEach((label) => {
+  //   label.addEventListener("click", () => {
+  //     console.log(label.innerText.trim());
+  //     renderHistory(label.innerText.trim());
+  //   });
+  // });
   document
     .getElementById("cleanCloudDatabase")
     .addEventListener("click", cleanCloudHistory);
@@ -254,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 注入自定义 CSS
 function injectCSS(customCSS) {
-  console.log("injectCSS");
+  // console.log("injectCSS");
   // 检查是否已经存在相同的样式
   if (!document.getElementById("translated-text-style")) {
     const style = document.createElement("style");
@@ -291,8 +427,9 @@ function exportToCSV() {
     history.forEach((entry) => {
       const original = entry.original.replace(/,/g, ""); // 防止 CSV 列分隔符问题
       const translated = entry.translated.replace(/,/g, ""); // 防止 CSV 列分隔符问题
+      const category = entry.category;
       const date = new Date(entry.date).toLocaleString();
-      csvRows.push(`"${original}","${translated}","${date}"`);
+      csvRows.push(`"${original}","${translated}","${category}","${date}"`);
     });
 
     // 生成 CSV 文件

@@ -89,6 +89,16 @@ document.addEventListener("DOMContentLoaded", () => {
   saveButton.addEventListener("click", () => {
     const originalText = document.getElementById("original-text").value;
     const translatedText = document.getElementById("translated-text").value;
+    // const category = document.getElementById("category-select").value;
+    let category = 0;
+    document
+      .querySelectorAll('#category-select input[type="radio"]')
+      .forEach(function (radio) {
+        if (radio.checked) {
+          category = radio.value;
+        }
+      });
+    console.log(category);
     const editIndex = document.getElementById("edit-index").value;
     if (originalText.trim() === "" || translatedText.trim() === "") {
       alert("Please enter both original and translated text.");
@@ -96,12 +106,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (editIndex > -1) {
-      saveEditedEntry(editIndex, originalText, translatedText);
+      saveEditedEntry(editIndex, originalText, translatedText, category);
       console.log(editIndex, originalText, translatedText);
 
       return;
     } else {
-      addNewEntry(originalText, translatedText);
+      addNewEntry(originalText, translatedText, category);
     }
   });
 
@@ -110,13 +120,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-function addNewEntry(originalText, translatedText) {
+function addNewEntry(originalText, translatedText, category) {
   chrome.storage.local.get({ translationHistory: [] }, (data) => {
     const history = data.translationHistory;
     history.push({
       original: originalText,
       translated: translatedText,
       date: new Date().toLocaleString(),
+      category: category,
     });
 
     chrome.storage.local.set({ translationHistory: history }, () => {
@@ -169,68 +180,24 @@ function deleteTranslationEntry(index) {
   });
 }
 
-// function openEditModal(entry, index) {
-//   // 创建弹出窗口元素
-//   const modal = document.createElement("div");
-//   modal.className = "modal";
-
-//   // 创建弹窗内容
-//   const modalContent = document.createElement("div");
-//   modalContent.className = "modal-content";
-
-//   // 创建两个 textarea 元素
-//   const originalTextarea = document.createElement("textarea");
-//   originalTextarea.value = entry.original;
-//   originalTextarea.rows = 5;
-//   originalTextarea.style.width = "100%";
-
-//   const translatedTextarea = document.createElement("textarea");
-//   translatedTextarea.value = entry.translated;
-//   translatedTextarea.rows = 5;
-//   translatedTextarea.style.width = "100%";
-
-//   // 创建保存按钮
-//   const saveButton = document.createElement("button");
-//   saveButton.textContent = "Save";
-//   saveButton.className = "save-button btn btn-success col-3";
-//   saveButton.onclick = () => {
-//     saveEditedEntry(index, originalTextarea.value, translatedTextarea.value);
-//     modal.remove(); // 保存后关闭弹窗
-//   };
-//   // 添加关闭按钮
-//   const closeButton = document.createElement("button");
-//   closeButton.textContent = "close";
-//   closeButton.className = "close-button btn btn-danger col-3";
-//   closeButton.onclick = () => modal.remove(); // 关闭弹窗
-
-//   const buttonContainer = document.createElement("div");
-//   buttonContainer.className = "d-flex justify-content";
-//   buttonContainer.style.gap = "10px"; // 为按钮间添加间距
-
-//   // 将按钮添加到容器中
-//   buttonContainer.appendChild(saveButton);
-//   buttonContainer.appendChild(closeButton);
-//   // 组装弹窗内容
-
-//   modalContent.appendChild(document.createTextNode("Original Text:"));
-//   modalContent.appendChild(originalTextarea);
-//   modalContent.appendChild(document.createElement("hr"));
-//   modalContent.appendChild(document.createTextNode("Convert Text:"));
-//   modalContent.appendChild(translatedTextarea);
-//   modalContent.appendChild(document.createElement("hr"));
-
-//   modalContent.appendChild(buttonContainer);
-
-//   modal.appendChild(modalContent);
-//   document.body.appendChild(modal);
-// }
 function openEditModal(entry, index) {
   const modal = document.getElementById("add-modal");
   modal.style.display = "flex";
   const originalTextarea = document.getElementById("original-text");
   const translatedTextarea = document.getElementById("translated-text");
+  // const categorySelect = document.getElementById("category-select");
+  // categorySelect.value = entry.category || 1;
   originalTextarea.value = entry.original;
   translatedTextarea.value = entry.translated;
+
+  // 遍历并设置特定值的radio为选中状态
+  document
+    .querySelectorAll('#category-select input[type="radio"]')
+    .forEach(function (radio) {
+      if (radio.value == entry.category) {
+        radio.checked = true;
+      }
+    });
   const modalTitle = document.getElementById("add-modal-title");
   modalTitle.innerHTML = "Edit Record";
   const editIndex = document.getElementById("edit-index");
@@ -238,13 +205,14 @@ function openEditModal(entry, index) {
 }
 
 // 保存编辑后的记录
-function saveEditedEntry(index, newOriginal, newTranslated) {
+function saveEditedEntry(index, newOriginal, newTranslated, newCategory) {
   chrome.storage.local.get({ translationHistory: [] }, (data) => {
     const history = data.translationHistory;
 
     // 更新相应的条目
     history[index].original = newOriginal;
     history[index].translated = newTranslated;
+    history[index].category = newCategory;
     history[index].date = new Date().toLocaleString(); // 更新日期为当前保存时间
 
     // 保存更新后的记录

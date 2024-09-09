@@ -108,7 +108,7 @@ chrome.commands.onCommand.addListener((command) => {
           chrome.scripting.executeScript({
             target: { tabId: tabId },
             func: translateOrToggleTranslation,
-            args: [apiConfig, defaultPrompt],
+            args: [apiConfig, defaultPrompt, configData.defaultPromptIndex],
           });
         } else {
           console.error("Invalid tabId:", tabId);
@@ -121,7 +121,7 @@ chrome.commands.onCommand.addListener((command) => {
 });
 
 // 执行翻译或切换翻译结果的显示
-function translateOrToggleTranslation(config, promptTemplate) {
+function translateOrToggleTranslation(config, promptTemplate, category) {
   let selectedText = window.getSelection().toString().trim();
   let node = null;
 
@@ -202,6 +202,7 @@ function translateOrToggleTranslation(config, promptTemplate) {
                   type: "saveTranslation",
                   originalText: selectedText,
                   translatedText: translatedText,
+                  category: category || 0,
                 });
               } else {
                 console.error("No container node found to replace text.");
@@ -220,12 +221,13 @@ function translateOrToggleTranslation(config, promptTemplate) {
   }
 }
 
-function saveTranslationResult(originalText, translatedText) {
+function saveTranslationResult(originalText, translatedText, category) {
   chrome.storage.local.get({ translationHistory: [] }, (result) => {
     const history = result.translationHistory;
     history.push({
       original: originalText,
       translated: translatedText,
+      category: category + 1,
       date: new Date().toLocaleString(),
     });
     chrome.storage.local.set({ translationHistory: history }, () => {
@@ -235,6 +237,10 @@ function saveTranslationResult(originalText, translatedText) {
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "saveTranslation") {
-    saveTranslationResult(message.originalText, message.translatedText);
+    saveTranslationResult(
+      message.originalText,
+      message.translatedText,
+      message.category,
+    );
   }
 });

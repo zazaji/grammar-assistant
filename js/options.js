@@ -1,6 +1,7 @@
 document.getElementById("viewHistory").addEventListener("click", () => {
   window.location.href = "show.html";
 });
+let langConfig = {};
 
 document
   .getElementById("configForm")
@@ -12,6 +13,7 @@ document
     const top_p = parseFloat(document.getElementById("top_p").value);
     const top_k = parseInt(document.getElementById("top_k").value, 10);
     const customCSS = document.getElementById("customCSS").value;
+    const language = document.getElementById("language").value;
 
     const apis = [];
     let defaultApiIndex = null;
@@ -51,6 +53,7 @@ document
       prompts,
       defaultPromptIndex,
       customCSS,
+      language,
     };
 
     chrome.storage.local.set({ configData }, function () {
@@ -64,6 +67,10 @@ document
 document.addEventListener("DOMContentLoaded", function () {
   chrome.storage.local.get("configData", function (data) {
     if (data.configData) {
+      const language = data.configData.language || "en";
+      document.getElementById("language").value = language;
+      changeLang(language);
+      // changeLang(language);
       document.getElementById("syncUrl").value = data.configData.syncUrl || "";
       document.getElementById("syncToken").value =
         data.configData.syncToken || "";
@@ -134,6 +141,8 @@ document.getElementById("importConfig").addEventListener("click", () => {
           const configData = JSON.parse(e.target.result);
           chrome.storage.local.set({ configData }, () => {
             // Reload configuration
+            document.getElementById("language").value =
+              configData.language || "en";
             document.getElementById("syncUrl").value = configData.syncUrl || "";
             document.getElementById("syncToken").value =
               configData.syncToken || "";
@@ -193,11 +202,11 @@ function addApiConfig(
     <div class="form-check">
       <input class="form-check-input" type="radio" name="defaultApi" id="defaultApi${index}" ${isDefault ? "checked" : ""}>
       <label class="form-check-label" for="defaultApi${index}">
-        Set as Default API
+      setDefaultAPI
       </label>
     </div>
     <div class="mb-3">
-      <label for="apiUrl${index}" class="form-label">API URL:</label>
+      <label for="apiUrl${index}" class="form-label">API Url:</label>
       <input type="text" id="apiUrl${index}" name="apiUrl" value="${url}" required class="form-control" />
     </div>
     <div class="row">
@@ -227,7 +236,7 @@ function addPromptConfig(index, prompt = "", isDefault = false) {
     <div class="form-check ">
       <input class="form-check-input" type="radio" name="defaultPrompt" id="defaultPrompt${index}" ${isDefault ? "checked" : ""}>
       <label class="form-check-label" for="defaultPrompt${index}">
-        Set as Default Prompt
+      setDefaultPrompt
       </label>
     </div>
     <div class="mb-3">
