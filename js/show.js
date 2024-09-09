@@ -74,8 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const regex = /([a-z]+[0-9]),[\sa-zA-Z0-9]+\s\*\s*{/g;
     let match;
     const properties = new Set();
-    // console.log("haskdlhjfalds");
-    // console.log(css);
 
     while ((match = regex.exec(css)) !== null) {
       const property = match[1];
@@ -84,10 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 生成 HTML <div> 集合
     let divsHtml = "";
-    console.log(properties);
 
     properties.forEach((property) => {
-      // console.log(property);
       divsHtml += `<div class='interactive-div' tag='${property}'><${property}>${property}</${property}></div>\n`;
     });
     return divsHtml;
@@ -192,7 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function reRenderSelect(index, category) {
     document.querySelectorAll(".selectDropdown").forEach((select) => {
-      console.log(select, index);
       if (select.name == index) {
         select.value = String(category);
         dropdown = select;
@@ -205,9 +200,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const className = selectedOption.getAttribute("data-bg");
 
       // 修改 select 的背景颜色
-      dropdown.className = `selectDropdown ${className}`;
 
-      const newCategory = dropdown.value;
+      const newCategory = event.target.value;
+      event.target.className = `selectDropdown btn-${newCategory}`;
+
+      console.log(event.target, newCategory, dropdown.className);
       updateCategory(index, newCategory);
     });
   }
@@ -231,14 +228,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const originalRow = document.createElement("tr");
           // 原文列
           const originalCell = document.createElement("td");
-
-          // const categoryBadge = document.createElement("span");
-          // categoryBadge.className = `badge btn-${entry.category}`;
-          // categoryBadge.textContent = entry.category;
-          // categoryBadge.style.cursor = "pointer";
-          // categoryBadge.addEventListener("click", () => {
-          //   console.log("categoryBadge clicked");
-          // });
 
           if (entry.category) {
             categoryDropdown = generateCategoryDropdown(index, entry.category);
@@ -359,7 +348,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const result = await response.json();
-      console.log("Success:", result);
       alert("Database cleared successfully!");
     } catch (error) {
       console.error("Error:", error);
@@ -390,7 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 注入自定义 CSS
 function injectCSS(customCSS) {
-  // console.log("injectCSS");
   // 检查是否已经存在相同的样式
   if (!document.getElementById("translated-text-style")) {
     const style = document.createElement("style");
